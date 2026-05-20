@@ -16,21 +16,6 @@ except ImportError:
 APP_TITLE = "추억의 7080 노래 생성기"
 DEFAULT_MODEL = "gpt-5.2-mini"
 
-
-MOOD_OPTIONS = [
-    "그리운 첫사랑",
-    "고향 생각",
-    "비 오는 다방",
-    "밤기차와 이별",
-    "통기타 청춘",
-    "황혼의 사랑",
-    "인생 회상",
-    "따뜻한 위로",
-    "봄날의 추억",
-    "가을 편지",
-    "직접 입력",
-]
-
 STYLE_OPTIONS = [
     "7080 포크",
     "7080 발라드",
@@ -51,14 +36,15 @@ VOCAL_OPTIONS = [
 
 LENGTH_OPTIONS = ["2분", "3분", "4분"]
 
-
-EXAMPLE_NOTES = {
-    "비 오는 다방": "비 오는 저녁, 작은 다방 창가에 혼자 앉아 오래된 첫사랑을 떠올리는 느낌. 라디오에서 흘러나오는 통기타 노래처럼 따뜻하고 쓸쓸하게.",
-    "고향 생각": "오랜 세월이 지나 다시 떠올리는 고향집과 어머니의 밥상, 저녁 연기, 좁은 골목길의 따뜻한 기억.",
-    "밤기차와 이별": "밤기차가 떠난 뒤 플랫폼에 홀로 남아 보내지 못한 말을 되새기는 느낌. 슬프지만 원망보다는 담담한 그리움.",
-    "황혼의 사랑": "해질녘 손을 잡고 천천히 걷는 오래된 부부의 사랑. 뜨겁기보다 깊고 조용한 마음.",
-    "인생 회상": "굽이굽이 지나온 인생길을 돌아보며 후회와 고마움이 함께 남는 분위기. 너무 무겁지 않고 따뜻하게.",
-}
+MOOD_HELP_TEXT = """
+예시를 참고해서 한 문장 또는 여러 줄로 자유롭게 적어주세요.<br><br>
+<b>예시 1</b><br>
+비 오는 저녁 작은 다방 창가에서 오래된 첫사랑을 떠올리는 느낌. 라디오와 통기타 감성.<br><br>
+<b>예시 2</b><br>
+밤기차가 떠난 뒤 플랫폼에 홀로 남아 보내지 못한 말을 되새기는 분위기. 슬프지만 담담하게.<br><br>
+<b>예시 3</b><br>
+오랜 세월이 지나 다시 찾은 고향 골목길. 어머니의 밥상과 저녁 연기가 떠오르는 따뜻한 기억.
+"""
 
 
 def get_openai_api_key():
@@ -153,14 +139,14 @@ def generate_with_openai(api_key, model, mood, style, vocal, length, user_note):
 """
 
     user_prompt = f"""
-아래 선택값으로 새로운 7080 감성 노래를 만들어줘.
+아래 입력값으로 새로운 7080 감성 노래를 만들어줘.
 
-[선택값]
-분위기: {mood}
+[입력값]
+사용자가 직접 쓴 노래 분위기: {mood}
 음악 스타일: {style}
 보컬: {vocal}
 곡 길이: {length}
-사용자 메모: {user_note or "없음"}
+추가 요청: {user_note or "없음"}
 
 [반환 형식]
 {{
@@ -178,8 +164,9 @@ def generate_with_openai(api_key, model, mood, style, vocal, length, user_note):
 [Final Chorus]
 
 가사 방향:
+- 사용자가 직접 쓴 노래 분위기를 가장 중요하게 반영할 것
 - 7080 한국 가요처럼 따뜻하고 선명하게
-- 고향, 첫사랑, 다방, 편지, 밤기차, 골목길, 라디오, 통기타, LP 같은 이미지를 자연스럽게 사용
+- 고향, 첫사랑, 다방, 편지, 밤기차, 골목길, 라디오, 통기타, LP 같은 이미지는 분위기에 맞을 때만 자연스럽게 사용
 - 직접적인 설명보다 장면과 물건으로 감정을 보여줄 것
 - 후렴은 짧고 반복하기 쉽게
 - 슬프더라도 너무 절망적이지 않게
@@ -199,26 +186,14 @@ def generate_with_openai(api_key, model, mood, style, vocal, length, user_note):
 
 def generate_rule_based(mood, style, vocal, length, user_note):
     note = user_note.strip() if user_note else ""
-    main_image_map = {
-        "그리운 첫사랑": "낡은 사진 속 첫사랑",
-        "고향 생각": "저녁 연기 피어오르던 고향집",
-        "비 오는 다방": "비 내리는 창가의 작은 다방",
-        "밤기차와 이별": "멀어지는 밤기차의 불빛",
-        "통기타 청춘": "통기타 하나에 기대던 젊은 날",
-        "황혼의 사랑": "해질녘 손을 잡은 두 사람",
-        "인생 회상": "굽이굽이 지나온 인생길",
-        "따뜻한 위로": "말없이 곁을 지켜준 사람",
-        "봄날의 추억": "꽃잎 흩날리던 봄날",
-        "가을 편지": "가을 바람에 접어 보낸 편지",
-    }
-    main_image = main_image_map.get(mood, mood or "오래된 추억")
+    main_image = mood.strip() or "오래된 추억"
 
     title_options = [
-        f"{main_image}",
-        f"{mood}의 노래",
         "그 시절 그 사람",
         "라디오에 남은 마음",
         "오래된 편지 한 장",
+        "다시 부르는 이름",
+        "세월이 남긴 노래",
     ]
 
     suno_prompt = (
@@ -230,11 +205,11 @@ def generate_rule_based(mood, style, vocal, length, user_note):
     style_prompt = (
         f"{style} 스타일의 {vocal} 곡. 7080 한국 가요 감성, 통기타와 잔잔한 드럼, "
         f"따뜻한 아날로그 질감, 라디오에서 흘러나오는 듯한 보컬, 따라 부르기 쉬운 후렴. "
-        f"분위기는 '{mood}'이며 곡 길이는 {length}. 실제 7080 가수나 기존 곡을 모방하지 않고 "
-        f"완전히 새로운 창작곡으로 만든다."
+        f"사용자가 입력한 분위기는 '{main_image}'이며 곡 길이는 {length}. "
+        f"실제 7080 가수나 기존 곡을 모방하지 않고 완전히 새로운 창작곡으로 만든다."
     )
     if note:
-        style_prompt += f" 사용자 메모 반영: {note}."
+        style_prompt += f" 추가 요청 반영: {note}."
 
     lyrics = f"""[Verse 1]
 비 오는 창가에 앉아
@@ -242,8 +217,8 @@ def generate_rule_based(mood, style, vocal, length, user_note):
 라디오에 흐르던 그 노래처럼
 그 시절 마음이 다시 찾아와
 
-{main_image}이 떠오르면
-말없이 웃던 그대 생각나
+{main_image}
+그 장면 하나가 마음에 남아
 보내지 못한 편지 한 장이
 아직도 서랍 속에 잠들어 있네
 
@@ -318,7 +293,7 @@ div[data-baseweb="select"] > div { background-color: #ffffff !important; border:
 )
 
 st.title("🎸 추억의 7080 노래 생성기")
-st.caption("몇 번만 선택하면 제목, Suno 프롬프트, 스타일 프롬프트, 가사가 바로 만들어집니다.")
+st.caption("분위기를 직접 적으면 제목, Suno 프롬프트, 스타일 프롬프트, 가사가 바로 만들어집니다.")
 
 api_key = get_openai_api_key()
 
@@ -336,8 +311,8 @@ with st.sidebar:
 st.markdown(
     """
 <div class="help-box">
-    아래 항목을 차례대로 고른 뒤 <b>노래 만들기</b> 버튼만 누르세요.<br>
-    실제 7080 노래를 따라 하지 않고, 그 시절의 정서만 담아 새 노래를 만듭니다.
+    먼저 만들고 싶은 노래의 분위기를 직접 적어주세요.<br>
+    <b>시간 + 장소 + 물건 + 감정</b>이 들어가면 7080 감성이 더 잘 살아납니다.
 </div>
 """,
     unsafe_allow_html=True,
@@ -346,29 +321,20 @@ st.markdown(
 with st.container():
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
 
-    mood_select = st.selectbox("1. 어떤 분위기의 노래를 만들까요?", MOOD_OPTIONS)
+    st.markdown(f"<div class='example-box'>{MOOD_HELP_TEXT}</div>", unsafe_allow_html=True)
 
-    if mood_select == "직접 입력":
-        custom_mood = st.text_area(
-            "원하는 분위기를 직접 입력하세요",
-            placeholder="예:\n비 오는 저녁 작은 다방 창가에서\n오래된 첫사랑을 떠올리는 느낌.\n라디오와 통기타 감성.",
-            height=140,
-        )
-        mood = custom_mood.strip() or "오래된 추억"
-    else:
-        mood = mood_select
-        if mood_select in EXAMPLE_NOTES:
-            st.markdown(
-                f"<div class='example-box'><b>추천 세부사항 예시</b><br>{html.escape(EXAMPLE_NOTES[mood_select])}</div>",
-                unsafe_allow_html=True,
-            )
+    mood = st.text_area(
+        "1. 어떤 분위기의 노래를 만들까요?",
+        placeholder="예:\n비 오는 저녁 작은 다방 창가에서\n오래된 첫사랑을 떠올리는 느낌.\n라디오와 통기타 감성.",
+        height=170,
+    ).strip()
 
     style = st.selectbox("2. 음악 스타일을 골라주세요", STYLE_OPTIONS)
     vocal = st.selectbox("3. 보컬을 골라주세요", VOCAL_OPTIONS)
     length = st.selectbox("4. 곡 길이", LENGTH_OPTIONS, index=1)
 
     user_note = st.text_area(
-        "5. 넣고 싶은 말이 있다면 적어주세요",
+        "5. 추가로 넣고 싶은 말이 있다면 적어주세요",
         placeholder="예:\n너무 절망적이지 않고 따뜻하게.\n세월이 흐른 뒤 담담하게 떠올리는 느낌.",
         height=130,
     )
@@ -378,21 +344,24 @@ with st.container():
 generate = st.button("🎵 노래 만들기", type="primary", use_container_width=True)
 
 if generate:
-    try:
-        with st.spinner("노래를 만들고 있습니다..."):
-            if use_openai and api_key:
-                result = generate_with_openai(api_key, model.strip() or DEFAULT_MODEL, mood, style, vocal, length, user_note)
-                source = f"OpenAI 생성 · {model.strip() or DEFAULT_MODEL}"
-            else:
-                result = generate_rule_based(mood, style, vocal, length, user_note)
-                source = "기본 예시 생성"
-    except Exception as e:
-        st.warning(f"OpenAI 생성에 실패해 기본 예시 방식으로 만들었습니다. 오류: {e}")
-        result = generate_rule_based(mood, style, vocal, length, user_note)
-        source = "기본 예시 생성"
+    if not mood:
+        st.warning("1번 분위기를 먼저 입력해주세요. 예: 비 오는 저녁 작은 다방 창가에서 오래된 첫사랑을 떠올리는 느낌.")
+    else:
+        try:
+            with st.spinner("노래를 만들고 있습니다..."):
+                if use_openai and api_key:
+                    result = generate_with_openai(api_key, model.strip() or DEFAULT_MODEL, mood, style, vocal, length, user_note)
+                    source = f"OpenAI 생성 · {model.strip() or DEFAULT_MODEL}"
+                else:
+                    result = generate_rule_based(mood, style, vocal, length, user_note)
+                    source = "기본 예시 생성"
+        except Exception as e:
+            st.warning(f"OpenAI 생성에 실패해 기본 예시 방식으로 만들었습니다. 오류: {e}")
+            result = generate_rule_based(mood, style, vocal, length, user_note)
+            source = "기본 예시 생성"
 
-    titles_text = "\n".join([f"{idx}. {title}" for idx, title in enumerate(result["title_options"], start=1)])
-    full_text = f"""[제목 후보]
+        titles_text = "\n".join([f"{idx}. {title}" for idx, title in enumerate(result["title_options"], start=1)])
+        full_text = f"""[제목 후보]
 {titles_text}
 
 [Suno 프롬프트]
@@ -404,41 +373,41 @@ if generate:
 [가사]
 {result['lyrics']}
 """
-    style_and_lyrics = f"""[음악 스타일 프롬프트]
+        style_and_lyrics = f"""[음악 스타일 프롬프트]
 {result['style_prompt']}
 
 [가사]
 {result['lyrics']}
 """
 
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
-    st.header("🎧 생성 결과")
-    st.caption(f"생성 방식: {source} · {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        st.markdown('<div class="result-card">', unsafe_allow_html=True)
+        st.header("🎧 생성 결과")
+        st.caption(f"생성 방식: {source} · {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
-    st.subheader("1. 제목 후보")
-    render_copy_button("제목 복사", titles_text, "copy_titles")
-    st.text_area("제목 후보 결과", value=titles_text, height=160)
+        st.subheader("1. 제목 후보")
+        render_copy_button("제목 복사", titles_text, "copy_titles")
+        st.text_area("제목 후보 결과", value=titles_text, height=160)
 
-    st.subheader("2. Suno 프롬프트")
-    render_copy_button("Suno 복사", result["suno_prompt"], "copy_suno")
-    st.text_area("Suno 프롬프트 결과", value=result["suno_prompt"], height=130)
+        st.subheader("2. Suno 프롬프트")
+        render_copy_button("Suno 복사", result["suno_prompt"], "copy_suno")
+        st.text_area("Suno 프롬프트 결과", value=result["suno_prompt"], height=130)
 
-    st.subheader("3. 음악 스타일 프롬프트")
-    render_copy_button("스타일 복사", result["style_prompt"], "copy_style")
-    st.text_area("음악 스타일 프롬프트 결과", value=result["style_prompt"], height=220)
+        st.subheader("3. 음악 스타일 프롬프트")
+        render_copy_button("스타일 복사", result["style_prompt"], "copy_style")
+        st.text_area("음악 스타일 프롬프트 결과", value=result["style_prompt"], height=220)
 
-    st.subheader("4. 가사")
-    render_copy_button("가사 복사", result["lyrics"], "copy_lyrics")
-    st.text_area("가사 결과", value=result["lyrics"], height=560)
+        st.subheader("4. 가사")
+        render_copy_button("가사 복사", result["lyrics"], "copy_lyrics")
+        st.text_area("가사 결과", value=result["lyrics"], height=560)
 
-    st.subheader("5. 한 번에 복사")
-    render_copy_button("음악 스타일 + 가사 한 번에 복사", style_and_lyrics, "copy_all")
+        st.subheader("5. 한 번에 복사")
+        render_copy_button("음악 스타일 + 가사 한 번에 복사", style_and_lyrics, "copy_all")
 
-    st.download_button(
-        "📄 텍스트 파일로 저장",
-        data=full_text,
-        file_name="7080_song_result.txt",
-        mime="text/plain",
-        use_container_width=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.download_button(
+            "📄 텍스트 파일로 저장",
+            data=full_text,
+            file_name="7080_song_result.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
